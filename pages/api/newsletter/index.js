@@ -1,7 +1,6 @@
-import fs from "fs";
-import path from "path";
+import { MongoClient } from "mongodb";
 
-const handler = (req, res) => {
+const handler = async (req, res) => {
   if (req.method === "POST") {
     const userEmail = req.body.email;
     if (!userEmail || !userEmail.includes("@")) {
@@ -9,7 +8,19 @@ const handler = (req, res) => {
       return;
     }
 
-    console.log(userEmail);
+    console.log(process.env);
+    const client = await MongoClient.connect(
+      `mongodb+srv://CN90:${process.env.DB_PASSWORD}@cnrl.snedz.mongodb.net/newsletter?retryWrites=true&w=majority`,
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+      }
+    );
+
+    const db = client.db();
+    await db.collection("emails").insertOne({ email: userEmail });
+
+    client.close();
     res.status(201).json({ message: "Thanks for subscribing!" });
   }
 };
