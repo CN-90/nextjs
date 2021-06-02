@@ -8,9 +8,8 @@ const handler = async (req, res) => {
       return;
     }
 
-    console.log(process.env);
     const client = await MongoClient.connect(
-      `mongodb+srv://CN90:${process.env.DB_PASSWORD}@cnrl.snedz.mongodb.net/newsletter?retryWrites=true&w=majority`,
+      `mongodb+srv://CN90:${process.env.DB_PASSWORD}@cnrl.snedz.mongodb.net/events?retryWrites=true&w=majority`,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
@@ -18,7 +17,7 @@ const handler = async (req, res) => {
     );
 
     const db = client.db();
-    await db.collection("emails").insertOne({ email: userEmail });
+    await db.collection("newsletter").insertOne({ email: userEmail });
 
     client.close();
     res.status(201).json({ message: "Thanks for subscribing!" });

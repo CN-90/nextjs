@@ -1,5 +1,17 @@
-const handler = (req, res) => {
+import { MongoClient } from "mongodb";
+import { getAllDocuments } from "../../../helpers/db-util";
+
+const handler = async (req, res) => {
   const eventId = req.query.eventId;
+
+  const client = await MongoClient.connect(
+    `mongodb+srv://CN90:${process.env.DB_PASSWORD}@cnrl.snedz.mongodb.net/events?retryWrites=true&w=majority`,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  );
+  const db = client.db();
 
   if (req.method === "POST") {
     const { email, name, text } = req.body;
@@ -14,26 +26,29 @@ const handler = (req, res) => {
       return;
     }
     const newComment = {
-      id: new Date().toISOString(),
       email,
       name,
       text,
+      eventId,
     };
-    console.log(newComment);
+
+    const result = await db.collection("comments").insertOne(newComment);
+
+    newComment.id = result.insertedId;
     res.status(201).json({ message: "Comment created.", comment: newComment });
   }
 
   if (req.method === "GET") {
-    const dummyList = [
-      { id: "c1", name: "Gandalf", text: "Where's frodo?" },
-      {
-        id: "c2",
-        name: "Dumbledore",
-        text: "Someone please help me; I've fallen and I can't get up.",
-      },
-    ];
-    res.status(200).json({ comments: dummyList });
+    const comments = await getAllDocuments(
+      client,
+      "comments",
+      { _id: -1 },
+      { eventId: eventId }
+    );
+    res.status(200).json({ comments: comments });
   }
+
+  client.close();
 };
 
 export default handler;
